@@ -1723,42 +1723,41 @@ end
 notween = function(p)
     plr.Character.HumanoidRootPart.CFrame = p
 end
+-- Khởi tạo biến toàn cục
+_G.FarmLevel = false
+
 AddToggle(MainTab, {
     Name = "Farm Cấp",
     Callback = function(Value)
         _G.FarmLevel = Value
+    end
+})
 
-        if Value then
-            task.spawn(function()
-                while _G.FarmLevel do
-                    task.wait(0.2)
-                    pcall(function()
-                        local plr = game.Players.LocalPlayer
+-- Spawn một loop duy nhất kiểm tra toggle
+task.spawn(function()
+    local plr = game.Players.LocalPlayer
+    while true do
+        task.wait(0.2)
+        if _G.FarmLevel then
+            pcall(function()
+                -- 1. Check level và set quái, quest
+                QuestCheck()
 
-                        -- 1. Check level và set quái, quest
-                        QuestCheck()
-
-                        -- 2. Nếu chưa nhận quest, TP tới quest và nhận
-                        if not plr.PlayerGui.Main.Quest.Visible then
-                            if PosQ then _tp(PosQ) end
-                            task.wait(0.8)
-                            replicated.Remotes.CommF_:InvokeServer("StartQuest", Qname, Qdata)
-                        end
-
-                        -- 3. TP tới vị trí quái
-                        if PosM then _tp(PosM) end
-
-                        -- 4. BringEnemy
-                        BringEnemy()
-
-                        -- 5. Auto Busou Haki
-                        if AutoBusoHaki then AutoBusoHaki() end
-
-                        -- 6. Attack quái
-                        if Attack then Attack() end
-                    end)
+                -- 2. Nếu chưa nhận quest, chỉ đi nhận quest
+                if not plr.PlayerGui.Main.Quest.Visible then
+                    if PosQ then
+                        _tp(PosQ)  -- đi nhận quest
+                        task.wait(0.8)
+                        replicated.Remotes.CommF_:InvokeServer("StartQuest", Qname, Qdata)
+                    end
+                else
+                    -- 3. Quest đã nhận, mới bắt đầu farm quái
+                    if PosM then _tp(PosM) end
+                    BringEnemy()
+                    if AutoBusoHaki then AutoBusoHaki() end
+                    if Attack then Attack() end
                 end
             end)
         end
     end
-})
+end)
